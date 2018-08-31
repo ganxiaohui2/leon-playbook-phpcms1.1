@@ -1,0 +1,10 @@
+[phpcms]
+127.0.0.1
+
+[phpcms:vars]
+repo_url=git@git.yanwenbo.cn:showerlee/phpcms.git
+deploy_to=/data/deploy_dir/phpcms
+db_config=caches/configs/database.php
+version_config=caches/configs/version.php
+test_dir=test_dir
+

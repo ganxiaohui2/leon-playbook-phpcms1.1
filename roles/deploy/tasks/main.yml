@@ -1,0 +1,42 @@
+- name: Backup current source code
+  shell: 
+    'mv {{deploy_to}} {{backup_to}}'
+
+- name: Get new source code
+  git: 'repo={{repo_url}} dest={{deploy_to}} version={{branch}}'
+
+- name: "Check if {{db_config}} exists"
+  stat: 'path={{backup_to}}/{{db_config}}'
+  register: dbfile_stat
+
+- name: "Check if {{test_dir}} exists"
+  stat: 'path={{backup_to}}/{{test_dir}}'
+  register: test_dir_stat  
+
+- debug: msg="{{backup_to}}/{{db_config}} exists"
+  when: dbfile_stat.stat.exists
+
+- debug: msg="{{backup_to}}/{{test_dir}} exists"
+  when: test_dir_stat.stat.exists
+
+- name: "Copy remote necessary original config to new release when Product env" 
+  copy:
+       'remote_src=True src={{backup_to}}/{{item.dir}} dest={{deploy_to}}/{{item.dir}} 
+        mode=0644 force=yes'
+  with_items:
+      - { name: 'db_config', dir: '{{db_config}}' }
+      - { name: 'version_config', dir: '{{version_config}}' }
+  when: project == "phpcms" and env == "prod" and dbfile_stat.stat.exists
+
+- name: "Copy dir {{test_dir}} to new release when Product env" 
+  shell:
+       'cp -a {{backup_to}}/{{test_dir}} {{deploy_to}}/'
+  when: project == "phpcms" and env == "prod"
+
+- name: Get php version
+  local_action: 'shell python {{ role_path }}/files/get_php_version.py {{site_url}}'
+  register: php_version_result
+
+- debug : msg="{{php_version_result}}"
+
+- debug : msg="{{php_version_result.stdout}}"
